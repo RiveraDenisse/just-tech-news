@@ -1,6 +1,7 @@
 //imported these 2 classes
-const {Model, DataTypes } = require('sequelize');
-const sequelize = require('../config/connection');
+const { Model, DataTypes } = require("sequelize");
+const sequelize = require("../config/connection");
+const bcrypt = require("bcrypt");
 
 //create our User model
 class User extends Model {}
@@ -17,12 +18,12 @@ User.init(
       // instruct that this is the Primary Key
       primaryKey: true,
       // turn on auto increment
-      autoIncrement: true
+      autoIncrement: true,
     },
     // define a username column
     username: {
       type: DataTypes.STRING,
-      allowNull: false
+      allowNull: false,
     },
     // define an email column
     email: {
@@ -32,8 +33,8 @@ User.init(
       unique: true,
       // if allowNull is set to false, we can run our data through validators before creating the table data
       validate: {
-        isEmail: true
-      }
+        isEmail: true,
+      },
     },
     // define a password column
     password: {
@@ -41,17 +42,31 @@ User.init(
       allowNull: false,
       validate: {
         // this means the password must be at least four characters long
-        len: [4]
-      }
-    }
+        len: [4],
+      },
+    },
   },
-
   {
+    hooks: {
+      //set up beforeCreate lifecycle "hook" functionality
+      async beforeCreate(newUserData) {
+        newUserData.password = await bcrypt.hash(newUserData.password, 10);
+        return newUserData;
+      },
+      // set up beforeUpdate lifecycle "hook" functionality
+      async beforeUpdate(updatedUserData) {
+        updatedUserData.password = await bcrypt.hash(
+          updatedUserData.password,
+          10
+        );
+        return updatedUserData;
+      },
+    },
     sequelize,
     timestamps: false,
     freezeTableName: true,
     underscored: true,
-    modelName: 'user'
+    modelName: "user",
   }
 );
 
